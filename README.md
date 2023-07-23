@@ -27,7 +27,6 @@ Die folgenden Schnappschüsse liefern einen ersten Eindruck der Benutzeroberflä
 ![models](./screenshot_models.png)
 ![descision_tree](./screenshot_decision_tree.png)
 ![lgbm](./screenshot_lgbm.png)
-![lgbm](./screenshot_lgbm.png)
 ![svm](./screenshot_svm.png)
 
 # Installation
