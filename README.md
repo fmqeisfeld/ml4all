@@ -23,6 +23,12 @@ Zudem besteht die Möglichkeit das Verhalten der Modelle durch Anpassen der Mode
 Darüber hinaus geben verschiedene Metriken Aufschluss über die Plausibilität und statistische Signifikanz der Ergebnisse, z.B. in Form einer sog. *Confusion Matrix* eines *Konfidenzintervalls*, einer Aufschlüsselung der Einflussfaktoren, der Varianz, des Bestimmtheitsmaßes usw. 
 
 Die folgenden Schnappschüsse liefern einen ersten Eindruck der Benutzeroberfläche.
+![datasets](./screenshot_datasets.png)
+![models](./screenshot_models.png)
+![descision_tree](./screenshot_decision_tree.png)
+![lgbm](./screenshot_lgbm.png)
+![lgbm](./screenshot_lgbm.png)
+![svm](./screenshot_svm.png)
 
 # Installation
 Die Installation der Applikation gestaltet sich dank Docker denkbar einfach.
