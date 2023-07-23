@@ -1,0 +1,275 @@
+{% extends 'accounts/main.html' %}
+{% load static %}
+{% block content %}
+    <section id="banner_parallax" class="slide_banner1">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="full">
+                        <div class="slide_cont">
+                            <h2>Datengestützte Entscheidungen treffen</h2>
+                            <p>Machine-Learning für Jedermann, überall, kostenlos</p>
+                            <div class="full slide_bt">
+                                <a class="white_bt bt_main" href="{% url 'registration' %}">Jetzt Registrieren</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="full">
+                        <div class="slide_pc_img wow fadeInRight" data-wow-delay="0.5s" data-wow-duration="1.5s">
+                            <img src="{% static 'img/pc-banner-sm2.png' %}" alt="#" width="170%"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- end header -->
+    <!-- section -->
+    <section class="layout_padding padding_top_0">
+        <div class="container">
+            <div class="row margin_bottom_30">                
+                <!-- featured cont -->
+                <div class="col-md-6 cont_theme_blog">
+                    <div class="full">
+                        <h3>Einfach intuitiv</h3>
+                        <p>
+                            Nur selten erfordert Datenanalyse
+                            tatsächlich ein Team von Experten. 
+                            In den meisten Fällen möchten Entscheider lediglich ihr Bauchgefühl mit Zahlen untermauern 
+                            oder zu Schätzungen gelangen, die besser als ein simples Mittelwertsmodell abschneiden. 
+                            Klassische, seit Jahrzehnten bewährte ML-Verfahren erledigen diese Aufgabe mit hoher Zuverlässigkeit. 
+                            Wie einfach das sein kann beweist diese Plattform. 
+                        </p>
+                        <!-- 
+                        <p>
+                            ML4ALL unterstützt alle gängigen Dateiformate wie MS-Excel, CSV oder ODF.                            
+                            Fehlerhafte Einträge oder fehlende Zeilen sind kein Problem.
+                            Diese werden entweder ausgelassen oder je nach Wunsch mit einem Mittelwert bzw. 
+                            einem, vom Benutzer vorgegebenen Wert ersetzt. 
+                            Eine visuelle Aufbereitung der Datensätze ermöglicht dann bereits erste 
+                            Rückschlüsse zu ziehen.
+                        </p>
+                        -->
+                    </div>
+                </div>
+                <!-- end featured cont -->
+                <!-- featured image -->
+                <div class="col-md-6 wow fadeInRight" data-wow-delay="0.5" data-wow-duration="1s">
+                    <div class="full">
+                        <div class="center zoom"><img src="{% static 'img/dataset2.png' %}" alt="#" style="width:100%;height:100%;"/></div>
+                    </div>
+                </div>
+                <!-- end featured image -->
+            </div>
+            <div
+                class="row margin_bottom_30">
+                <!-- featured image -->
+                <div class="col-md-6 wow fadeInLeft" data-wow-delay="0.5" data-wow-duration="1s">
+                    <div class="full">
+                        <div class="center zoom"><img src="{% static 'img/model_select3.png' %}" alt="#" style="width:100%;height:100%;"/></div>
+                    </div>
+                </div>
+                <!-- end featured image -->
+                <!-- featured cont -->
+                <div class="col-md-6 cont_theme_blog">
+                    <div class="full">
+                        <h3>Modell nach Wahl</h3>
+                        <p>Für jedes Problem das passende Modell. 
+                           Ob Regression, Klassifizierung oder Zeitverlaufsprognose - 
+                           ML4ALL bietet eine Vielzahl etablierter Analyseverfahren. 
+                           Zudem besteht die Möglichkeit das Verhalten der Modelle durch 
+                           Anpassen der Modellparameter in einem gewissen Rahmen zu steuern. 
+                           Ferner ermöglichen einige Modelle eine automatisierte Parameteroptimierung 
+                           und garantieren so das Beste aus den Daten herauszuholen. 
+                        </p>
+                    </div>
+                </div>
+                <!-- end featured cont -->
+            </div>
+            <div
+                class="row margin_bottom_30">
+                <!-- featured cont -->
+                <div class="col-md-6 cont_theme_blog">
+                    <div class="full">
+                        <h3>Training</h3>                        
+                        <p>
+                            Dank leistungsstarker AWS-Server ist das Training der Modelle nach wenigen Sekunden abgeschlossen. 
+                            Interaktive Diagramme erlauben eine Erforschung des Ergebnisraums. 
+                            Zusätzlich geben verschiedene Metriken Aufschluss üder Plausibilität und statistische Signifikanz. 
+                            Wahlweise lassen sich die trainierten Modelle auf neue, zuvor ungesehene Daten anwenden.
+                            Anschließend stehen die Ergebnissen im CSV-Format zum Download bereit. 
+                        </p>
+                    </div>
+                </div>
+                <!-- end featured cont -->
+                <!-- featured image -->
+                <div class="col-md-6 wow fadeInRight" data-wow-delay="0.5" data-wow-duration="1s">
+                    <div class="full">
+                        <div class="center zoom"><img src="{% static 'img/forecast_tree_comp.png' %}" alt="#" style="width:100%;height:100%;"/></div>
+                    </div>
+                </div>
+                <!-- end featured image -->
+            </div>
+        </div>
+    </section>
+    <!-- end section -->
+    <!-- section -->
+    {% comment %}
+        <section class="layout_padding gradiant_bg cross_layout">
+    {% endcomment %}    
+    <section class="layout_padding cross_layout">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="information_blogs">
+                        <div class="imf_icon"><img src="{% static 'img/upload_icon.png' %}" alt="#"/></div>
+                        <div class="imf_head">
+                            <h3>Hochladen</h3>
+                        </div>
+                        <div class="imf_cont">                            
+                            <p>Dank zuverlässiger AWS-Server stehen hochgeladene Daten 
+                               jederzeit und überall zur Verfügung. 
+                               ML4ALL unterstützt alle gängigen Formate wie MS-Excel, CSV und ODF. 
+                               Fehlerhafte oder fehlende Einträge sind kein Problem. 
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">                    
+                    <div class="cold-md-4">
+                        <div class="imf_icon"><img src="{% static 'img/ml_icon.png' %}" alt="#"/></div>
+                        <div class="imf_head">
+                            <h3>Analysieren</h3>
+                        </div>
+                        <div class="imf_cont">
+                            <p>Klare Bedienelemente ermöglichen nach wenigen Klicks 
+                               statistische Analysen mit etablierten und seit Jahrzehnten 
+                               bewährten ML-Verfahren.                                
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="information_blogs">
+                        <div class="imf_icon"><img src="{% static 'img/presi_icon.png' %}" alt="#"/></div>
+                        <div class="imf_head">
+                            <h3>Überzeugen</h3>
+                        </div>
+                        <div class="imf_cont">
+                            <p> Alle Ergebnisse stehen zum Donwload bereit um bei der 
+                                Entscheidungsfindung 
+                                einen bleibeneden Eindruck zu hinterlassen. 
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- end section -->
+    <!-- section -->
+     <section class="layout_padding layer_style">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="full text_align_center">
+                        <div class="heading_main center_head_border heading_style_1">
+                            <h2>Beispiel- 
+                                <span>Datensätze</span>
+                            </h2>
+                            <h4></h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row app-features">
+                <div class="col"> <!-- </div>-md-4 col-sm-6 col-xs-12"> -->
+                    <ul class="features-left">
+                        <li>                       
+                            <a href="{% static 'datasets/titanic.csv' %}" ><i class="fas fa-ship"></i></a>                            
+                            <div class="fl-inner">
+                                <h4>Titanic</h4>
+                                <p>
+                                    Datensatz zur Titanic-Katastrophe vom 
+                                    15ten April 1912. 
+                                    Für jeden Passagier wird neben Alter, Geschlecht und sozio-ökonomischen Merkmalen  
+                                    festgehalten ob die Person überlebt hat oder nicht.
+                                </p>
+                                <a href="https://www.kaggle.com/heptapod/titanic"> Quelle:kaggle.com</a>
+                            </div>
+                        </li>
+                        <li>
+                            <a href="{% static 'datasets/Births2015.csv' %}"> <i class="fas fa-baby"></i></a>
+                            <div class="fl-inner">
+                                <h4>Births</h4>
+                                <p>Zeitliche Entwicklung der täglichten Geburten in den Jahren 2015 und 2016 im US-Bundestaat Michigan.
+                                </p>
+                                <a href="https://www.kaggle.com/"> Quelle:kaggle.com</a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col"> <!--- md-4 col-sm-6 col-xs-12">-->
+                    <ul class="features-right">
+                        <li>
+                            <a href="{% static 'datasets/boston_housing.csv' %}"> <i class="fas fa-home"></i></a>
+                            <div class="fr-inner">
+                                <h4>Boston Housing</h4>
+                                <p>
+                                    Verschiedene Immobilienspezifische Metriken in Boston-Massachusetts aus dem Jahre 1978 zur 
+                                    Einschätzung des Werts.
+                                </p>
+                                <a href="https://www.kaggle.com/schirmerchad/bostonhoustingmlnd">Quelle:kaggle.com</a>
+                            </div>
+                        </li>
+                        <li>
+                            <a href="{% static 'datasets/airline-passengers.csv' %}"> <i class="fas fa-plane"></i></a>
+                            <div class="fl-inner">
+                                <h4>Airline Passengers</h4>
+                                <p>Zeitliche Entwicklung der Passagierzahlen einer Fluggesellschaft von 1959 bis 1964.
+                                </p>
+                                <a href="https://www.kaggle.com/abhishekmamidi/air-passengers">Quelle:kaggle.com</a>
+                            </div>
+                        </li>                        
+                    </ul>
+                </div>
+                <div class="col"> <!--- md-4 col-sm-6 col-xs-12">-->
+                    <ul class="features-right">
+                        <li>
+                            <a href="{% static 'datasets/ChurnTelecom.csv' %}"> <i class="fas fa-mobile-alt"></i></a>
+                            <div class="fr-inner">
+                                <h4>Orange Telecom Churn</h4>
+                                <p>
+                                    Kundenverhalten der Orange S.A., dem größten Telekommunikationsanbieter Frankreichs.
+                                    Die Daten dienen dazu, das Abwandern der Kunden (Churn) bzw. die Kundenzufriedenheit 
+                                    vorherzusagen. 
+                                </p>
+                                <a href="https://www.kaggle.com/mnassrib/telecom-churn-datasets">Quelle: kaggle.com </a>
+                            </div>
+                        </li>
+                        <li>
+                            <a href="{% static 'datasets/car_accidents.csv' %}"> <i class="fas fa-car"></i></a>
+                            <div class="fr-inner">
+                                <h4>US car accidents</h4>
+                                <p>
+                                    Klassifizierung von Verkehrsunfällen in den USA aus dem Jahr 2011 unter Berücksichtigung 
+                                    von Alkoholeinfluss, Geschlecht, Jahreszeit, Wetter- und Straßenbedingungen und sozio-ökonomischen Merkamlen der beteiligten
+                                    Personen.                                    
+                                </p>
+                                <a href="https://www.kaggle.com/swaralipibose/us-car-accidents-in-2011">Quelle: kaggle.com</a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>                
+            </div>            
+        </div>
+                    
+    </section> 
+    
+
+    <!-- end section -->
+
+{% endblock %}

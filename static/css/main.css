@@ -1,0 +1,47 @@
+
+#logo{
+}
+
+body{
+    background-color: #ebeff5;
+}
+
+
+#total-orders{
+    background-color: #4cb4c7;
+}
+
+
+#orders-delivered{
+    background-color: #7abecc;
+}
+
+#orders-pending{
+    background-color: #7CD1C0;
+}    
+
+
+input[type="file"] {
+    display: none;
+}
+.custom-file-upload {
+    border: 1px solid #ccc;
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+
+/* canvas{
+    object-fit: cover;
+    width: 10%;
+    height: 10%;
+} */
+
+/* .footer {
+    position: relative;
+    margin-top: -150px;
+    height: 150px;
+    clear:both;
+    padding-top:20px;
+  }  */

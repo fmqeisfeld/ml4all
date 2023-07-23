@@ -1,0 +1,251 @@
+{% extends 'accounts/main.html' %}
+{% load static %}
+{% load index %}
+{% block content %}
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link rel ="stylesheet" type="text/css" href="{% static '/css/spinner.css' %}" >
+<div id="cover-spin" style="display:block;"></div>
+<script src={% static 'js/chart.js@2.8.0.js' %}></script>
+
+<!-- CHART -->
+<div class="card shadow mb-4">
+<div class="card-header"><h3 style="text-align:center;">Arima-Zeitverlaufsprognose</h3></div>
+<div class="card-body" style="width:100%;height:100%;background-color: #fff;">
+{% comment %} <h1 style="text-align:center;"><span class="badge badge-secondary">ARIMA-Prognose</span></h1>   {% endcomment %}
+  <div style="width:100%;height:60vh">
+    <canvas id="chart1" style="width:100%;height:100%"></canvas> <!-- width="auto" height="400" style="display:block;"></canvas>        -->
+  </div>
+</div>
+<div class="card-footer" style="margin-top:20px;" id="params"></div>
+</div>
+
+<!-- METRICS -->
+<div class="card mt-4 shadow">
+  <div class="card-header"><h3 style="text-align:center;">Metriken</h3></div>
+  <div class="card-body" id="metrics">
+  <div style="width:100%;height:40vh">
+     <canvas id="chart2" style="width:100%;height:100%"></canvas> 
+  </div>
+  </div>
+  <!-- TABLE -->
+  <table class="table table-bordered mx-auto w-auto" style="width:50%;">
+    <THEAD class="thead-dark">
+      <tr> 
+        <th> Wurzel d. mittleren Fehlerquadratsumme</th><th>Bestimmtheitsma&szlig;</th>
+      </tr>
+      <tr id='error_row'>        
+      </tr>
+    </THEAD>
+  </table>
+</div>
+
+
+<div class="card shadow mt-4">
+<div class="card-header"><h3 style="text-align:center;">Solver-Warnungen</h3></div>
+
+<div class="card-body" style="width:100%;height:100%;background-color: #fff;">  
+  <ul class="list-group" id="meldungen">      
+  </ul>
+</div>
+</div>
+
+
+<script>
+var filepath = '{{ filepath }}';
+//console.log('loading JOSN:' + filepath);
+function loadjson() {
+  return $.getJSON(filepath);
+}
+// *****************   AB HIER IST MAIN *****************************  //
+$.when(loadjson()).then(function (data) {
+    $('#cover-spin').hide(0);
+    /**************************** MODEL-PARAMS IN FOOTER**************************/
+    var params = document.getElementById('params');
+    var tabfoot = document.createElement('TABLE');
+    tabfoot.classList.add('table');
+    tabfoot.setAttribute('style','width:100%');
+
+    var tabfoothead = document.createElement("THEAD");
+    tabfoothead.classList.add('thead-dark');
+
+    var tabfootrow = document.createElement('TR');
+    var tabfootrowstr='';
+    tabfootrowstr += '<td> Prognosefenster:' + data.forecast_window*100 +'%</td>';
+    tabfootrowstr += '<td> Optimierungspermutationen:' + data.optim_iter +'</td>';    
+    tabfootrowstr += '<td> Validierungsgr&ouml;&szlig;e:' + data.test_size*100 +'%</td>';
+    tabfootrowstr += '<td> Max. Autoregressions- und MA-Parameter:' + data.max_order +'%</td>';
+    tabfootrow.innerHTML = tabfootrowstr;
+
+
+
+    tabfoothead.appendChild(tabfootrow);      
+    tabfoot.appendChild(tabfootrow);
+    params.appendChild(tabfoot);
+
+    /**************************** METRICS **************************/
+    var error_row = document.getElementById('error_row');
+    error_row.innerHTML='<td>' + data.rmse+ '</td><td>' + data.r2 + '</td>';
+
+    //append meldungen
+    var meldungen = document.getElementById('meldungen');
+    for (var key in data.warnings) {
+      var txt = data.warnings[key];
+      console.log(txt);
+
+      var node = document.createElement("LI");
+      node.className = 'list-group-item';
+      node.textContent=txt;
+      meldungen.appendChild(node);  
+    }
+
+    new Chart(document.getElementById("chart1"), {
+    type: 'line',
+    data: {
+        labels: data.x,
+        datasets: [{ 
+            data: data.y1,
+            label: "Original",
+            borderColor: "#3e95cd",
+            fill: false
+        }, { 
+            data: data.y2,
+            label: "Prognose",
+            borderColor: "#8e5ea2",
+            fill: false
+        }, 
+        ]
+    },
+
+    options: {
+        title: {
+        display: true,
+        fontSize: 20,
+        text: data.y_axis,
+        scales: {
+            yAxes: [{
+              scaleLabel: {
+                display: true,
+                labelString: data.y_axis,
+              },                    
+              ticks: {
+                beginAtZero: false
+              }
+            }]
+          }
+        }
+    }
+    });
+
+    // acf plot
+    var chartOptions = {
+        responsive: true,
+        title: {
+            display: true,
+            text: 'Autokorrelation'
+        },
+          legend: {
+            display: true,
+            // this toggles on / off the confidence intervals
+            labels: {
+              filter: function(item, chart) {
+                return !item.text.includes('_');
+              }
+            },
+          onClick: function(e, legendItem) { // need to hide index -1 and index +1
+              var index = legendItem.datasetIndex;
+              var ci = this.chart;
+              var alreadyHidden = (ci.getDatasetMeta(index).hidden === null) ? false : ci.getDatasetMeta(index).hidden;
+              var meta_lo = ci.getDatasetMeta(index - 1);
+              var meta = ci.getDatasetMeta(index);
+              var meta_hi = ci.getDatasetMeta(index + 1);
+              if (!alreadyHidden) {
+                meta_lo.hidden = true;
+                meta.hidden = true;
+                meta_hi.hidden = true;
+              } else {
+                meta_lo.hidden = null;
+                meta.hidden = null;
+                meta_hi.hidden = null;            
+              }
+
+              ci.update();
+            },
+            position: "top",
+          },
+          scales: {
+            xAxes: [{
+              scaleLabel: {
+                display: true,
+                labelString: 'Lag'
+              }
+            }]
+          }
+            
+
+    };
+
+    new Chart(document.getElementById("chart2"), {
+    type: 'line',
+    data: {
+        labels: data.xacf,
+        datasets: [
+        { 
+            data: data.iacf_neg,
+            label: "ACF_lo",
+            backgroundColor: 'rgba(55, 173, 221,  0.6)',
+            borderWidth: 0.1,
+            pointRadius: 0.0,            
+            fill: false
+        },                 
+        { 
+            data: data.acf,
+            label: "ACF",
+            borderColor: "#3e95cd",
+            fill: false
+        },
+        { 
+            data: data.iacf_pos,
+            label: "ACF_hi",
+            backgroundColor: 'rgba(55, 173, 221,  0.6)',
+            borderWidth: 0.1,
+            pointRadius: 0.0,            
+            fill: '-2'
+        },         
+        // PACF
+        { 
+            data: data.ipacf_neg,
+            label: "PACF_lo",
+            backgroundColor:  'rgba(221, 55, 173, 0.6)',
+            borderWidth: 0.1,
+            pointRadius: 0.0,            
+            fill: false
+        },                 
+        { 
+            data: data.pacf,
+            label: "PACF",
+            borderColor: 'rgba(221, 55, 173, 1)',
+            fill: false
+        },
+        { 
+            data: data.ipacf_pos,
+            label: "PACF_hi",
+            backgroundColor:  'rgba(221, 55, 173, 0.6)',
+            borderWidth: 0.1,
+            pointRadius: 0.0,            
+            fill: '-2'
+        },          
+
+        ]
+    },
+    // Single legend entry for conf. bounds instead of two
+    // source: https://stackoverflow.com/questions/59322507/combining-multiple-legend-elements-in-chart-js
+    options: chartOptions,
+    });
+
+});
+</script>
+
+
+
+
+{% endblock %}  

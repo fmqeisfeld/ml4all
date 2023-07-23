@@ -1,0 +1,119 @@
+{% extends 'accounts/main.html' %}
+{% load static %}
+{% load index %}
+{% block content %}
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<script src={% static 'js/chart.js@2.8.0.js' %}></script>
+
+<!-- CHART -->
+<div class="card shadow">
+<div class="card-header"><h3 style="text-align:center;">Anomalit&auml;ts-Analyse</h3></div>
+<div class="card-body" style="width:100%;height:100%;background-color: #fff;">  
+  <div style="width:100%;height:60vh">
+    <canvas id="myChart" style="width:100%;height:100%"></canvas> <!-- width="auto" height="400" style="display:block;"></canvas>        -->
+  </div>
+</div>
+</div>
+
+
+<!-- ACCORDION -->
+<div id="accordion">
+  {% for name in featurenames %}
+  <div class="card">
+    <div class="card-header" id="heading{{ forloop.counter0 }}">
+      <h5 class="mb-0">
+        <button class="btn collapsed btn-primary btn-block" data-toggle="collapse" data-target="#collapse{{ forloop.counter0 }}">
+        Bestimmende Größe: {{ name }}, Mittlerer Anomalitäts-Wert: {{ scores|index:forloop.counter0 }}
+      </button>
+      </h5>
+    </div>
+    <div id="collapse{{ forloop.counter0 }}" class="collapse" >
+      <div class="card-body shadow">
+<!-- DIE TABELLEN         -->
+        <table class="table table-bordered">
+          <tr>
+              <th>Bezeichnung </th>
+              <th colspan="5">Werte der Top 5 anomalen Zeilen</th>               
+          </tr> 
+          <tr>
+              <th></th>
+              <th>1.</th>
+              <th>2.</th>
+              <th>3.</th>
+              <th>4.</th>
+              <th>5.</th>
+          </tr>
+             
+          {% for head in headers %}
+          <tr>       
+            <td> {{ head }} </td>
+            <td> {{ featuresets|index:forloop.parentloop.counter0|index:forloop.counter0|index:0 }} </td>
+            <td> {{ featuresets|index:forloop.parentloop.counter0|index:forloop.counter0|index:1 }} </td>
+            <td> {{ featuresets|index:forloop.parentloop.counter0|index:forloop.counter0|index:2 }} </td>
+            <td> {{ featuresets|index:forloop.parentloop.counter0|index:forloop.counter0|index:3 }} </td>
+            <td> {{ featuresets|index:forloop.parentloop.counter0|index:forloop.counter0|index:4 }} </td>
+          </tr>
+          {% endfor %}
+          
+          
+        </table>           
+      </div>
+    </div>
+  </div>
+  
+  {% endfor %}
+  </div>
+  
+<!-- CHART DETAILS -->
+<script>
+var datalabels = {{ featurenames|safe }};
+var datavalues = {{ scores|safe }};
+
+var ctx = document.getElementById('myChart').getContext('2d');
+var myChart = new Chart(ctx, {
+    type: 'horizontalBar',
+    data: {
+    labels: datalabels,
+    datasets: [{
+      label: '',
+      data: datavalues,
+      backgroundColor: 'rgba(255, 99, 132, 1)',
+    }]
+  },          
+
+
+  options: {
+        // fit to width
+      title: {
+        display: true,
+        fontSize: 20,
+        text: 'Anomalitäts-Quellen',
+      },
+      legend: {
+        display: false,
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+      showScale: false,
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }],
+        xAxes: [{
+          scaleLabel: {
+            display: true,
+            labelString: "Mittlerer Anomalitäts-Wert"
+          }
+        }]
+      }
+    }
+});    
+</script> 
+ 
+
+  
+
+
+{% endblock %}    

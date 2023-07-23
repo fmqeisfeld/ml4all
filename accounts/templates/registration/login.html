@@ -1,0 +1,45 @@
+{% extends 'accounts/main.html' %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+
+
+<!-- QUELLE: https://bootsnipp.com/snippets/dldxB -->    
+<link rel ="stylesheet" type="text/css" href="{% static '/css/login.css' %}" >
+
+<div class="container d-flex flex-column min-vh-100" id="outercontainer">    
+  <div class="wrapper">
+    <div id="formContent">
+
+  {% comment %} ACHTUNG: HABE DIE GANZEN FADEINS RAUSGENOMMEN WEIL NERVIG {% endcomment %}
+  <form method="post" action="{% url 'login' %}">
+    {% csrf_token %}
+
+    <input type="text" required id="id_username" name="username" autocomplete="username"  placeholder="Benutzername">
+    <input type="password" required id="id_password" autocomplete="current-password" name="password"  placeholder="Passwort">
+    <input type="submit" value="Anmelden">
+
+  </form>
+
+<!-- Bei Fehler -->
+{% if form.errors %}
+  <div>
+    <p>Der Benutzername oder das Passwort ist falsch.<br> Versuchen Sie es ernuet.</p>  
+  </div>  
+{% endif %}
+
+  <!-- Remind Passowrd -->
+  <div id="formFooter">
+    <a class="underlineHover" href="{% url 'password_reset' %} ">Passwort vergessen?</a>
+    <a class="underlineHover" href="/accounts/registrieren">Noch nicht registriert?</a>
+  </div>
+
+
+  </div>
+</div>
+</div>
+ <hr>
+{% endblock %}
+
+
+

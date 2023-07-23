@@ -1,0 +1,600 @@
+{% extends 'accounts/main.html' %}
+{% load static %}
+{% block content %}
+{% comment %} <script type="text/javascript" src="https://d3js.org/d3.v3.min.js"></script>  {% endcomment %}
+{% comment %} <script src="https://code.jquery.com/jquery-3.5.1.min.js" type="text/javascript"></script> {% endcomment %}
+{% comment %} <script src={% static 'js/jquery-3.5.1.min.js' %} type="text/javascript"></script> {% endcomment %}
+{% comment %} <script src={% static 'js/popper.min.js' %} type="text/javascript"></script> {% endcomment %}
+{% comment %} <script src={% static 'js/bootstrap.min.js' %} type="text/javascript"></script>     {% endcomment %}
+<link rel ="stylesheet" type="text/css" href="{% static '/css/spinner.css' %}" >
+<div id="cover-spin" style="display:block;"></div>
+
+<script src="{% static 'js/math.js' %}"></script>
+<script src="{% static 'js/chart.js@2.8.0.js' %}"></script>
+
+
+<style>
+    .range-wrap {
+      position: relative;
+      margin: 0 auto 3rem;
+    }
+
+    .range {
+      width: 100%;
+    }
+
+    .bubble {
+      background: red;
+      color: white;
+      padding: 4px 12px;
+      position: absolute;
+      border-radius: 4px;
+      left: 50%;
+      transform: translate(-50%,70%);
+      /* transform: translateX(-50%); */
+
+    }
+
+    .bubble::after {
+      content: "";
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: red;
+      top: -1px;
+      left: 50%;
+    }
+</style>
+<div class="card shadow">
+  <div class="card-header"><h3 style="text-align:center;">St&uuml;tzverktormaschinen-Regression</h3></div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-8" id="viz">
+        <h1 style="text-align:center;"><span class="badge badge-secondary" id="Targetname"></span></h1>
+        <div style="width:100%;height:60vh">
+          <canvas id="myChart" style="width:100%;height:100%;"></canvas> <!-- width="auto" height="400" style="display:block;"></canvas>        -->
+        </div>
+        <!-- X-Axis SELECTION -->        
+        <div class="dropdown text-center" id="dropdown-axis">
+          <label class="h3">X-Achse:</label>
+          <button class="btn btn-primary btn-block dropdown-toggle" type="button" id="dropbtn-axis" data-toggle="dropdown">
+            X-Achse
+          </button>
+          <div class="dropdown-menu" id='axis-menu'>        
+              <!-- <button class="dropdown-item" type="button" id="1">Action</button> -->        
+          </div>
+        </div>
+      </div> 
+    <div class="col" id="controls"></div>     
+  </div>    
+  <div class="card-footer" style="margin-top:20px;" id="params"></div>
+</div>
+</div>
+
+<!-- METRICS -->
+<div class="card mt-4 shadow">
+  <div class="card-header"><h3 style="text-align:center;">Metriken</h3></div>
+  <div class="card-body" id="metrics">
+  <div style="height:40vh;">
+    <canvas id="histchart"  width="100%" height="100%"></canvas>
+  </div>
+  </div>
+  <!-- TABLE -->
+  <table class="table table-bordered mx-auto w-auto" style="width:50%;">
+    <THEAD class="thead-dark">
+      <tr> 
+        <th> Mittlerer Fehler</th><th>95-Perzentil Fehlerintervall</th><th>Bestimmtheitsma&szlig;</th>
+      </tr>
+      <tr id='error_row'>        
+      </tr>
+    </THEAD>
+  </table>
+</div>
+
+
+  <script>
+    
+    var filepath = '{{ filepath }}';
+
+    function loadjson() {
+      return $.getJSON(filepath);
+    }
+
+    // *****************   AB HIER IST MAIN *****************************  //
+    $.when(loadjson()).then(function (data) {
+      $('#cover-spin').hide(0);
+      
+      var mean = data.mean;
+      var std = data.std;
+
+      var features_type = data.features_type;
+      var features_range = data.features_range;
+      var featureset=[];
+      var featureset_transformed=[]; // scaled numeric vals, categorial 0 or 1
+
+      /**************************** MODEL-PARAMS IN FOOTER**************************/
+      var params = document.getElementById('params');
+      var tabfoot = document.createElement('TABLE');
+      tabfoot.classList.add('table');
+      tabfoot.setAttribute('style','width:100%');
+
+      var tabfoothead = document.createElement("THEAD");
+      tabfoothead.classList.add('thead-dark');
+
+      var tabfootrow = document.createElement('TR');
+      
+      if(data.kernel == 'poly')
+      {
+        tabfootrowstr = '<td> Kernel:' + data.kernel + data.order + '</td>'; // poly2,poly3,poly4,linear
+      }
+      else
+      {
+        tabfootrowstr = '<td> Kernel:' + data.kernel + '</td>';
+      }
+      tabfootrowstr += '<td> Inv. L2-Regularisierung:' + data.C +'</td>';
+      tabfootrowstr += '<td> Optimierungsschleifen:' + data.optimloops +'</td>';
+      tabfootrowstr += '<td> Max. Solver-Iterationen:' + data.max_iter +'</td>';
+      tabfootrowstr += '<td> Validierungsgr&ouml;&szlig;e:' + data.test_size*100 +'%</td>';
+      tabfootrow.innerHTML = tabfootrowstr;
+
+
+      tabfoothead.appendChild(tabfootrow);      
+      tabfoot.appendChild(tabfootrow);
+      params.appendChild(tabfoot);
+
+      /**************************** METRICS **************************/
+      var error_row = document.getElementById('error_row');
+      error_row.innerHTML='<td>' + data.mean_err+ '</td><td> [' + data.lower_err + ',' + data.upper_err +']</td><td>' + data.r2 + '</td>';
+
+      var metrics = document.getElementById('metrics');
+
+      var dataValues=data['counts'];
+      var dataLabels=data['edges'];
+      var secondtolastbinedge = dataLabels[19];
+      var lastbinedge = dataLabels[20];
+
+      var ctxhist = document.getElementById('histchart').getContext('2d');
+      
+
+      var maechart = new Chart(ctxhist, {
+          type: 'bar',
+          data: {
+              labels: dataLabels,
+              datasets: [{
+              label: '',
+              data: dataValues,
+              backgroundColor: 'rgba(255, 99, 132, 1)',
+              }]
+          },
+          options: {
+              // fit to width  
+              title: {
+                  display: true,
+                  text: 'Fehlerverteilung'
+              },
+              legend: {
+                display:false,
+              },
+              responsive: true,
+              maintainAspectRatio: false,
+              showScale: false,                
+              scales: {
+                  xAxes: [{
+                      display: false,
+                      barPercentage: 1.05, //20 bins ergeben immer dieses ratio
+                      ticks: {
+                          max: secondtolastbinedge, //das muss genau binwidth kleiner als maxval sein
+                      }
+                  }, 
+                  {
+                      display: true,                      
+                      ticks: {
+                          autoSkip: false,
+                          max: lastbinedge,                          
+                      },
+                      scaleLabel: {
+                        display: true,
+                        labelString:'Fehler',
+                      },                      
+                  }],
+                  yAxes: [{
+                      scaleLabel: {
+                        display: true,
+                        labelString: 'Häufigkeit'
+                      },
+
+                      ticks: {
+                      beginAtZero:false,
+                      },
+                  }]
+              }
+          }
+      })         
+
+      
+      /**************************** BUILD CONTROLS ******************************/
+/*       function rangeInputChange(id, val) {
+        document.getElementById(id).value = val;
+      } */
+
+      for (var key in features_type) {
+        var val = features_type[key];
+        //console.log("key: " + key + ", val: " + val);        
+
+        /**************  BUILD NUMERIC CONTROLS*********************************/
+        if (val != 'ABC') {
+          var maxval = features_range[key][1];
+          var minval = features_range[key][0];
+          
+          var ctrlstr = '<label>' + key + '</label>' +
+            ' <div class="range-wrap">' +
+            ' <input type="range"' +
+            ' class="range"' +
+            ' name="' + key + '"' +
+            ' id="' + key.replaceAll(' ','') + '"' +
+            ' min=' + Math.round(100*minval)/100 +
+            ' max=' + Math.round(100*maxval)/100;
+
+          if (val == 'float') {
+            var step = (maxval - minval) / 20;
+            step = Math.round(step*100)/100;
+            ctrlstr += ' step="' + step + '"';
+          }
+          else
+          {            
+            var step=1.0;
+            ctrlstr += ' step="' + step + '"';
+          }
+          //ctrlstr +=   ' value=" />';                               
+          //ctrlstr += ' onchange="rangeInputChange(this.id, this.value)"'; 
+
+          ctrlstr += '>';
+
+          //ctrlstr += ' class="form-control-range" />';
+          //ctrlstr += ' <output for="' + key + '" onforminput="value =' + key + '.valueAsNumber;"></output>'
+
+          ctrlstr += ' <output class="bubble"></output>';
+          ctrlstr += ' </div>';        
+
+
+          $("#controls").append(ctrlstr);
+        }
+        /**************  BUILD CATEGORICAL CONTROLS *********************************/
+        else{
+          //ACHTUNG: Bei den IDs muss ich whitespaces entfernen, da sosnt jquery die IDs nicht finden kann
+          var ctrlstr;
+          ctrlstr = '<label>' + key + '</label>';
+          ctrlstr += ' <div class= "dropdown text-center"+ id="' + key + '">';          
+          ctrlstr += ' <button class="btn btn-primary btn-block dropdown-toggle" type="button" id="btn_' + key.replaceAll(' ','_') + '" data-toggle="dropdown">';
+          ctrlstr +=  key;
+          ctrlstr += ' </button>';
+          ctrlstr += ' <div class="dropdown-menu">';
+          for(var foo in features_range[key]){            
+            ctrlstr += '<a class="dropdown-item" href="#" id="' + key.replaceAll(' ','_') + '-_-' + features_range[key][foo];
+            ctrlstr += '">';
+            ctrlstr += features_range[key][foo];
+            ctrlstr += '</a>';
+          }
+          ctrlstr += ' </div';
+          ctrlstr += ' </div>';
+
+          $("#controls").append(ctrlstr);     
+
+        }
+      }
+
+
+          
+    /**************   DROPDOWNS CLICK ************************************/
+    $("#controls .dropdown-menu").on('click', '.dropdown-item', (function (e) {
+      //var btnindex= $(this).index();
+      e.preventDefault(); // dont jump up the page after clickig!
+      var btnid = e.target.id;
+/*     console.log(btnid);
+      console.log('#btn_' + btnid.split('-_-')[0]);
+      console.log($(this)); */
+      var parentid = btnid.split('-_-')[0];
+      var drpdown = document.getElementById('btn_' + parentid);
+      //console.log('btn_'+parentid);
+      drpdown.textContent=($(this).text());
+      drpdown.value = ($(this).text());     
+      //$('#btn_'+parentid+":first-child").text($(this).text());
+      //$('#btn_'+parentid+":first-child").val($(this).text());     
+      setTimeout(function(){update_graph()},0);
+      //update_graph(); 
+    }));
+    /************   SLIDERS CHANGE **************/ 
+    $('input').on('change',(function() {
+        setTimeout(function(){update_graph()},0);
+        //update_graph(); 
+    }))
+
+
+    // ********* SET DROPDOWN TO FIRST ELEMENT **********************
+    var btn_dropdowns = $("#controls .btn.dropdown-toggle:first-child");
+    var a_dropdowns=$("#controls a.dropdown-item:first-child");
+    //console.log(btn_dropdowns);
+    for(var bar=0;bar < btn_dropdowns.length;bar++){
+      //console.log(btn_dropdowns[bar]);
+      btn_dropdowns[bar].textContent=a_dropdowns[bar].text;
+      btn_dropdowns[bar].value=a_dropdowns[bar].text;
+    }    
+
+    /**************   X-AXIS DROPDOWN  INIT ****************************/
+    // only numeric features
+    var axismenu=$('#axis-menu');
+    //console.log(axismenu);
+    for (var key in features_type) {
+        var val = features_type[key];
+        if (val != 'ABC') {
+          var btnstr;
+          btnstr = '<a class="dropdown-item" href="#" >';
+          btnstr += key;
+          btnstr += '</a>';
+          axismenu.append(btnstr);
+        }
+    }
+    // on-click
+    $('#axis-menu').on('click', '.dropdown-item', (function (e) {
+      //var btnindex= $(this).index();
+      e.preventDefault(); // dont jump up the page after clickig!
+      var btnid = e.target.id;
+      var parentid = btnid.split('-_-')[0];
+      $("#dropbtn-axis").text($(this).text());
+      $("#dropbtn-axis").val($(this).text());
+
+    /****************** ACTIVE/INACTIVE *******************************/ 
+      var Xselected = $("#dropbtn-axis")[0].value
+      //console.log();
+      id = Xselected.replaceAll(' ','');    
+      $("input").prop("disabled", false);
+      $("#"+id).prop("disabled",true);
+
+      //update_graph();
+      setTimeout(function(){update_graph()},0);
+    }));
+    // set initial to firstchild
+     var firstelem = $('#axis-menu>a')[0];
+    $("#dropbtn-axis").text(firstelem.text);
+    $("#dropbtn-axis").val(firstelem.text);
+    //console.log(firstelem);
+
+
+    $("#Targetname").text(data.target_name);
+
+
+    /**************  COLLECT FEATURES ********************************/
+    function gather_features()
+    {      
+      featureset=[]; // clear list
+      featureset_orig=[]; //original for debug 
+
+      $('output,button', $('#controls')).each(function (i) 
+      {                
+        //categorical
+        //console.log('i:');
+        //console.log(i);
+
+        if($(this)[0].type=="button")
+        {  //categorical feature
+          var parent = $(this)[0].parentElement;
+          //var children = parent.children;
+          var featval = $(this)[0].value;
+          
+
+          var featname = parent.id; 
+          //var featlen = features_range[featname].length;         
+
+          var indexinarr = features_range[featname].indexOf(featval);                    
+          var featval_scaled = (indexinarr-mean[i])/std[i];
+
+          //console.log('featval:' + featval);
+          //console.log('featval_svaled:' + featval_scaled);
+          //console.log('inarr:' + indexinarr);
+
+          if(std[i] != 0) //kann passieren, wenn alle einträge dieselbe zahl sind (z.B. Jahr)          
+            featureset.push(featval_scaled);
+          else  
+            featureset.push(indexinarr);                 
+        }
+        else
+        { //not categorical ctrlappend
+          var featval = parseFloat($(this)[0].value);          
+          var featval_scaled = (featval-mean[i])/std[i];  
+
+          //console.log('featval:' + featval);
+          //console.log('featval_svaled:' + featval_scaled);
+
+          if(std[i] != 0) //kann passieren, wenn alle einträge dieselbe zahl sind (z.B. Jahr)          
+            featureset.push(featval_scaled);            
+          else  
+            featureset.push(featval);
+        }        
+      });
+      //console.log("fset:")
+      //console.log(featureset);
+      return featureset;  
+    }    
+    /****************************  PREDICT *************************/
+    function kernel_fun(x_i,x_j)
+    {
+      if(data.kernel=='poly')
+      { 
+
+        return ((data.gamma * math.multiply(x_i,x_j))**data.order);
+      }
+      else
+      {
+        return math.multiply(x_i,x_j);
+      }
+    }
+    
+
+    function predict(X)
+    {
+        var m = data.m;
+        coeffs = data.coeffs;
+
+        var s=0;
+        for(var n=0; n<m;n++)
+        {        
+          //console.log(data.vecs[n]);
+          
+          s += coeffs[n] * kernel_fun(X, data.vecs[n]);          
+        }
+        s += data.intercepts; // scalar 
+
+        
+        return s;        
+    }  
+    // *************** helper function to output formatted results.************* 
+    function print(value) {
+      var precision = 14;
+      document.write(math.format(value, precision) + '<br>');
+    }            
+    // ***************  DRAW CHART ******************//
+    Chart.defaults.global.animation.duration=0; // keine animation
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],            
+            datasets: [{
+                label: '',
+                data: [0],
+                borderWidth: 2,
+                fill: false,
+            },     
+            ]
+        },        
+        
+        options: {
+            // fit to width  
+            responsive: true,
+            maintainAspectRatio: false,
+            showScale: false,
+            scales: {
+                yAxes: [{
+                    scaleLabel: {
+                    display: true,
+                    labelString: "Prognose"
+                    },                    
+                    ticks: {
+                        beginAtZero: false
+                    }
+                }]
+            }
+        }
+    });    
+    // ***************  UPDATE  CHART *****************
+    function update_graph()        
+    {
+      var colors =[ 
+            "#FFCE56",
+            "#FFA75D",
+            "#46BFBF",
+            "#5975CB",
+            "#FF5D5D",
+            "#FFCC5D",
+            "#52DF52",
+            'black'
+      ];      
+      var selected = $('#dropbtn-axis')[0].value;
+      var id = selected.replaceAll(' ','');
+
+      //ACHTUNG: jquery hat probleme wenn in ID ein Punkt vorkommt!
+      var ctrl = document.getElementById(id); //$('#'+id); 
+      var minval = parseFloat(ctrl.min); 
+      var maxval = parseFloat(ctrl.max);
+      var step; 
+      
+      step=parseFloat(ctrl.step);
+      // browser might freeze for many features and huge amount of steps 
+      // ---> limit
+      step = Math.max(step, (maxval-minval)/20.0);
+
+      //console.log(minval+" "+maxval+" "+step);
+      // Create predictions for full range
+      var xrange = [];
+      var predictions = [];
+      // at which index in featureset is current numerical feature?
+      //var indexinarr = features_range.indexOf(selected);
+      var indexof = Object.keys(features_range).indexOf(selected);
+      var featureset = gather_features();        
+      
+      // prepare graph data      
+        for (var cnt = minval; cnt <= maxval; cnt+=step) 
+        {        
+            var x_scaled = (cnt-mean[indexof])/std[indexof];
+            xrange.push(math.format(cnt, 2));          
+            featureset[indexof] = x_scaled;         
+            var tmp =predict(featureset);                
+            tmp = math.round(tmp,3);
+            predictions.push(tmp);
+        }
+
+      datasets=[];
+      var tmp_dict= 
+      {
+          'label':data.target_name,
+          'data':predictions,
+          'borderWidth': 2.0,
+          'fill':false,
+          'borderColor':colors[1],
+          'backgroundColor':colors[1],
+      }       
+      datasets.push(tmp_dict);
+      
+      //console.log(datasets);
+
+      // NOW APPLY CHANGES      
+      myChart.data.labels.pop();
+      myChart.data.datasets.forEach((dataset) => {
+        dataset.data.pop();
+      });      
+      myChart.data.labels=xrange;
+      myChart.data.datasets=datasets;      
+      myChart.update();      
+
+    /****************** ACTIVE/INACTIVE *******************************/ 
+        var Xselected = $("#dropbtn-axis")[0].value
+        //console.log();
+        id = Xselected.replaceAll(' ','');    
+        $("input").prop("disabled", false);
+        $("#"+id).prop("disabled",true);
+    }
+    //myChart.then(function(data) {    
+    //});
+    
+
+      /**************   RANGE SLIDERS ********************************/
+      const allRanges = document.querySelectorAll(".range-wrap");
+        allRanges.forEach(wrap => {
+        const range = wrap.querySelector(".range");
+        const bubble = wrap.querySelector(".bubble");
+      
+        range.addEventListener("input", () => {
+          setBubble(range, bubble);
+        });
+        setBubble(range, bubble);
+      });
+      
+      function setBubble(range, bubble) {
+        const val = range.value;
+        const min = range.min ? range.min : 0;
+        const max = range.max ? range.max : 100;
+        const newVal = Number(((val - min) * 100) / (max - min));
+        bubble.innerHTML = val;
+      
+        // Sorta magic numbers based on size of the native UI thumb
+        bubble.style.left = `calc(${newVal}% + (${8 - newVal * 0.15}px))`;
+        //update_graph();
+      }   
+      //Initial graph update
+      setTimeout(function(){update_graph()},0);
+
+    });
+
+  </script>
+
+  {% endblock %}    

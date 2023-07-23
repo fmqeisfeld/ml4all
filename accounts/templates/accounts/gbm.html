@@ -1,0 +1,297 @@
+{% extends 'accounts/main.html' %}
+{% load static %}
+{% load index %}
+{% block content %}
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link rel ="stylesheet" type="text/css" href="{% static '/css/spinner.css' %}" >
+<div id="cover-spin" style="display:block;"></div>
+
+<script src={% static 'js/chart.js@2.8.0.js' %}></script>
+
+<!-- CHART -->
+<div class="card shadow">
+<div class="card-header"><h3 style="text-align:center;">LGBM Zeitverflaufsprognose</h3></div>
+
+<div class="card-body" style="width:100%;height:100%;background-color: #fff;">  
+  <div style="width:100%;height:60vh">
+    <canvas id="chart1" style="width:100%;height:100%"></canvas> <!-- width="auto" height="400" style="display:block;"></canvas>        -->
+  </div>
+  <div class="card-footer" style="margin-top:20px;" id="params"></div>
+</div>
+</div>
+
+<!-- METRICS -->
+<div class="card mt-4 shadow">
+  <div class="card-header"><h3 style="text-align:center;">Metriken</h3></div>
+  <div class="card-body" id="metrics">
+  <div style="height:40vh;">
+    <canvas id="importance"  width="100%" height="100%"></canvas>
+  </div>
+  </div>
+  <!-- TABLE -->
+  <table class="table table-bordered mx-auto w-auto" style="width:50%;">
+    <THEAD class="thead-dark">
+      <tr> 
+        <th> Wurzel d. mittleren Fehlerquadratsumme</th><th>Bestimmtheitsma&szlig;</th>
+      </tr>
+      <tr id='error_row'>        
+      </tr>
+    </THEAD>
+  </table>
+</div>
+
+<script>
+var filepath = '{{ filepath }}';
+function loadjson() {
+  return $.getJSON(filepath);
+}
+// *****************   AB HIER IST MAIN *****************************  //
+$.when(loadjson()).then(function (data) {
+  $('#cover-spin').hide(0);
+  var fillBetweenLinesPlugin = {
+    afterDatasetsDraw: function (chart) {
+        var ctx = chart.chart.ctx;
+        var xaxis = chart.scales['x-axis-0'];
+        var yaxis = chart.scales['y-axis-0'];
+        var datasets = chart.data.datasets;
+        ctx.save();
+
+        for (var d = 0; d < datasets.length; d++) {
+            var dataset = datasets[d];
+            if (dataset.fillBetweenSet == undefined) {
+                continue;
+            }
+
+            // get meta for both data sets
+            var meta1 = chart.getDatasetMeta(d);
+            var meta2 = chart.getDatasetMeta(dataset.fillBetweenSet);
+            
+            // do not draw fill if one of the datasets is hidden
+            if (meta1.hidden || meta2.hidden) continue;
+            
+            // create fill areas in pairs
+            for (var p = 0; p < meta1.data.length-1;p++) {
+            	// if null skip
+              if (dataset.data[p] == null || dataset.data[p+1] == null) continue;
+              
+              ctx.beginPath();
+              
+              // trace line 1
+              var curr = meta1.data[p];
+              var next = meta1.data[p+1];
+              ctx.moveTo(curr._view.x, curr._view.y);
+              ctx.lineTo(curr._view.x, curr._view.y);
+              if (curr._view.steppedLine === true) {
+                ctx.lineTo(next._view.x, curr._view.y);
+                ctx.lineTo(next._view.x, next._view.y);
+              }
+              else if (next._view.tension === 0) {
+                ctx.lineTo(next._view.x, next._view.y);
+              }
+              else {
+                  ctx.bezierCurveTo(
+                    curr._view.controlPointNextX,
+                    curr._view.controlPointNextY,
+                    next._view.controlPointPreviousX,
+                    next._view.controlPointPreviousY,
+                    next._view.x,
+                    next._view.y
+                  );
+							}
+              
+              // connect dataset1 to dataset2
+              var curr = meta2.data[p+1];
+              var next = meta2.data[p];
+              ctx.lineTo(curr._view.x, curr._view.y);
+
+              // trace BACKWORDS set2 to complete the box
+              if (curr._view.steppedLine === true) {
+                ctx.lineTo(curr._view.x, next._view.y);
+                ctx.lineTo(next._view.x, next._view.y);
+              }
+              else if (next._view.tension === 0) {
+                ctx.lineTo(next._view.x, next._view.y);
+              }
+              else {
+                // reverse bezier
+                ctx.bezierCurveTo(
+                  curr._view.controlPointPreviousX,
+                  curr._view.controlPointPreviousY,
+                  next._view.controlPointNextX,
+                  next._view.controlPointNextY,
+                  next._view.x,
+                  next._view.y
+                );
+              }
+
+							// close the loop and fill with shading
+              ctx.closePath();
+              ctx.fillStyle = dataset.fillBetweenColor || "rgba(0,0,0,0.1)";
+              ctx.fill();
+            } // end for p loop
+        }
+    } // end afterDatasetsDraw
+}; // end fillBetweenLinesPlugin
+
+
+    /**************************** MODEL-PARAMS IN FOOTER**************************/
+    var params = document.getElementById('params');
+    var tabfoot = document.createElement('TABLE');
+    tabfoot.classList.add('table');
+    tabfoot.setAttribute('style','width:100%');
+
+    var tabfoothead = document.createElement("THEAD");
+    tabfoothead.classList.add('thead-dark');
+
+    var tabfootrow = document.createElement('TR');
+    var tabfootrowstr='';
+    tabfootrowstr += '<td> Prognosefenster:' + data.forecast_window*100 +'%</td>';
+    tabfootrowstr += '<td> Optimierungsschleifen:' + data.opt_round +'</td>';    
+    tabfootrowstr += '<td> Validierungsgr&ouml;&szlig;e:' + data.test_size*100 +'%</td>';
+    tabfootrow.innerHTML = tabfootrowstr;
+
+
+    tabfoothead.appendChild(tabfootrow);      
+    tabfoot.appendChild(tabfootrow);
+    params.appendChild(tabfoot);
+
+    /**************************** METRICS **************************/
+    var error_row = document.getElementById('error_row');
+    error_row.innerHTML='<td>' + data.rmse+ '</td><td>' + data.r2 + '</td>';
+
+
+Chart.pluginService.register(fillBetweenLinesPlugin);
+
+    var chartOptions = {
+        tooltips: {
+          mode: 'index' // all datasets in tooltip
+        },
+        title: {
+            display: false,
+            text: ''
+        },
+          legend: {
+            display: true,
+          },
+          scales: {
+            xAxes: [{
+              scaleLabel: {
+                display: false,
+                labelString: 'X'
+              }
+            }],
+            yAxes: [{
+              scaleLabel: {
+                display: true,
+                labelString: data.target,
+              }
+            }],            
+          }            
+    };
+
+    new Chart(document.getElementById("chart1"), {
+    type: 'line',
+    data: {
+        labels: data.x,
+        datasets: [
+        {          
+            label: "unteres 95% Konfidenzintervall",
+            backgroundColor: 'rgba(155,0,0,0.2)',
+            borderColor:'#8E1600',
+            borderWidth: 1.0,
+            pointRadius: 0.1,            
+            fill: false,
+            data: data.y_lower,
+            fillBetweenSet: 1,
+            fillBetweenColor: 'rgba(155,0,0,0.2)'
+        },                         
+        {             
+            label: "oberes 95% Konfidenzintervall",
+            backgroundColor: 'rgba(155,0,0,0.2)',
+            borderColor: '#8E1600',            
+            borderWidth: 1.0,
+            pointRadius: 0.1,            
+            fill: false,
+            data: data.y_upper,            
+        },
+        {             
+            label: "Prognose",
+            //borderColor: "black",
+            borderColor: "blue",
+            backgroundColor:'blue',
+            //borderColor: "#8e5ea2",
+            fill: false,
+            data: data.y2,
+        },        
+        {             
+            data: data.y1,
+            label: "Original",
+            //borderColor: "#3e95cd",
+            borderColor: "red",
+            backgroundColor:'red',
+            fill: false
+        },        
+    ]},
+    // Single legend entry for conf. bounds instead of two
+    // source: https://stackoverflow.com/questions/59322507/combining-multiple-legend-elements-in-chart-js
+    options: chartOptions,
+    });
+
+var datalabels = []; 
+var datavalues = [];
+
+for(var key in data.importance){
+  datalabels.push(key);
+  datavalues.push(data.importance[key]);
+}
+
+var ctx2 = document.getElementById('importance').getContext('2d');
+var myChart2 = new Chart(ctx2, {
+    type: 'horizontalBar',
+    data: {
+    labels: datalabels,
+    datasets: [{
+      label: '',
+      data: datavalues,
+      backgroundColor: 'rgba(255, 99, 132, 1)',
+    }]
+  },          
+
+
+  options: {
+        // fit to width
+      title: {
+        display: true,
+        fontSize: 20,
+        text: 'Einflussfaktoren',
+      },
+      legend: {
+        display: false,
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+      showScale: false,
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          }
+        }],
+        xAxes: [{
+          scaleLabel: {
+            display: true,
+            labelString: "Relevanz"
+          }
+        }]
+      }
+    }
+});   
+
+
+});
+</script>
+
+
+
+
+{% endblock %}  

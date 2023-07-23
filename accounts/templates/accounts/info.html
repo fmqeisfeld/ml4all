@@ -1,0 +1,10 @@
+{% extends 'accounts/main.html' %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+
+{% comment %}     je nach kontext werden hier infos (z.B. zum fortschritt bei registrierung) angezeigt {% endcomment %}
+
+<h2> {{ msg }} </h2>
+
+{% endblock %}

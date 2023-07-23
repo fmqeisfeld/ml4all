@@ -1,0 +1,83 @@
+{% extends 'accounts/main.html' %}
+{% load humanize %}
+{% block content %}
+<!-- I need jquery to trigger post request on changing file upload form --> 
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#path').on('change', function() {
+        $("#uploadform_id").submit();
+    });
+});
+/* disable active button, see 
+https://stackoverflow.com/questions/46956196/how-to-disable-buttons-in-button-group-bootstrap*/ 
+ $('.btn-group .btn.disabled').click(function(event) {
+     return false;
+});
+</script>
+
+<div class="col-12">
+    <div class="card card-body shadow">            
+        <table class="table table-bordered">
+            <tr>
+                <th>Datei</td>
+                <th>Zeilen</th>                    
+                <th>Größe</td>
+                <th>Alter </td>            
+            </tr>  
+
+<!-- List View for user files -->
+<!-- Put delete button next to every file by embedding a new table in the first column-->
+<!-- Push the right column of inner table to the right by styling its width to 1% -->
+<!-- remove space around this invisible cells by zeroing padding and margin -->
+
+            {% for file in files %}
+            <tr>
+                <td>
+                    <div>
+                    <table><tr style="margin:none;">
+                        <td style="border:none;padding:0;margin:0;">
+                            {{ file }}
+                        </td>
+                        <td align="right" style="border:none;width:1%;padding:0;margin:0;">                                
+                            <form method="post">
+                            {% csrf_token %}                            
+                            <input type="hidden" name="del" value="{{ file.id }}">                            
+                            <button type="submit" class="btn btn-danger btn-sm"> <i class="fas fa-trash-alt"></i></button>                            
+                            </form>                            
+                        </td>
+                    </tr></table>                        
+                    </div>
+                </td>
+                <td> {{ file.rows }}</td>
+                <!-- Kleiner Trick für Division: widthratio entfremden -->
+                <td>{% widthratio file.path.size 100 1 %} kB</td>                
+                <td>{{ file.date_created|timesince }}</td>                            
+            </tr>        
+            {% endfor %}   
+
+<!-- Last row contains form for file upload. 
+It is styled to look like a button  -->
+
+            <tr>
+                <td colspan=4>
+                {% if errmsg %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ errmsg }}
+                    </div>
+                {% endif %}
+                <form method="post" enctype="multipart/form-data" id="uploadform_id" action=""> 
+                  {% csrf_token %}
+                  <label for ="path" class="custom-file-upload btn btn-primary btn-sm btn-block">
+                        Datei hinzufügen <i class="fas fa-upload"></i>
+                  </label>
+                  <input id="path" type="file" name="path" accept=".csv, .xls, .xlsx, .odf, .ods">
+                </form>    
+                </td>
+            </tr>
+            </table>
+            </div>
+            </div>
+
+{% endblock %}    
+
+

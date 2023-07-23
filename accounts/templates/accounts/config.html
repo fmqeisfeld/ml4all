@@ -1,0 +1,170 @@
+{% extends 'accounts/main.html' %}
+{% load static %}
+{% load index %}
+{% block content %}
+{% load crispy_forms_tags %}
+
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<style>
+.bd-example {
+    padding: 1.5rem;
+    margin: 1.5rem;    
+    border-width: .2rem;
+    border-style: solid; 
+    border-color: #f8f9fa;
+}
+</style>
+<div class="card shadow">
+    <div class="card-header"><h3 style="text-align:center;">Einstellungen</h3></div>
+        <div class="card-body" style="width:100%;height:100%;background-color: #fff;">      
+    </div>
+    {% if success %}
+    <div class="bd-example">
+        <div class="alert alert-success" role="alert" style="text-aling:center;">
+            Die Einstellungen wurden erfolgreich übernommen.
+        </div>  
+    </div>
+    {% endif %}
+    {% if form.errors %}
+    <div class="bd-example">
+        <div class="alert alert-danger" role="alert" style="text-aling:center;">
+            Die Einstellungen konnten nicht übernommen werden.
+        </div>      
+    </div>
+    {% endif %}
+    <form method="post">
+    {% csrf_token %}
+    <!-- LOGISTISCHE KLASSIFIZIERUNG -->
+    <div class="bd-example">
+        <legend>Logistische Klassifizierung</legend>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for ="{{ form.logreg_maxiter.id_for_label }}"> Maximale Solver-Iterationen:</label> {{ form.logreg_maxiter|as_crispy_field }}        
+            </div>
+            <div class="form-group col-md-6">
+                <label for ="{{ form.logreg_testsize.id_for_label }}"> Validierungsgröße bzgl. Datensatzgröße:</label> {{ form.logreg_testsize|as_crispy_field }}
+            </div>
+        </div>        
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for ="{{ form.logreg_C.id_for_label }}"> Inverser L2-Regularisierungs-Parameter</label> {{ form.logreg_C|as_crispy_field }}        
+            </div>
+            <div class="form-group col-md-6">
+                <label for ="{{ form.logreg_optimloops.id_for_label }}"> Bayes'sche Optimierungsiterationen:</label> {{ form.logreg_optimloops|as_crispy_field }}
+            </div>
+        </div>
+        {% comment %}  
+        <!-- ERROR REPORT EDIT: crispy forms kümmert sich darum --> 
+        {% for error in form.logreg_maxiter.errors  %}  
+            <div>
+                <p style="color: red">{{ error }}</p> 
+            </div>  
+        {% endfor %}
+        {% endcomment %}
+
+
+    </div>
+    <!-- SVM KLASSIFIZIERUNG -->
+    <div class="bd-example">
+        <legend>Stützvektormaschine Klassifizierung</legend>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for ="{{ form.svc_maxiter.id_for_label }}"> Maximale Solver-Iterationen:</label> {{ form.svc_maxiter|as_crispy_field }}        
+            </div>
+            <div class="form-group col-md-6">
+                <label for ="{{ form.svc_testsize.id_for_label }}"> Validierungsgröße bzgl. Datensatzgröße:</label> {{ form.svc_testsize|as_crispy_field }}
+            </div>
+        </div>        
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for ="{{ form.svc_C.id_for_label }}"> Inverser L2-Regularisierungs-Parameter</label> {{ form.svc_C|as_crispy_field }}        
+            </div>
+            <div class="form-group col-md-6">
+                <label for ="{{ form.svc_optimloops.id_for_label }}"> Bayes'sche Optimierungsiterationen:</label> {{ form.svc_optimloops|as_crispy_field }}
+            </div>
+        </div> 
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for ="{{ form.svc_kernel.id_for_label }}"> Kernel:</label> {{ form.svc_kernel|as_crispy_field }}
+            </div>
+            <div class="form-group col-md-6">
+                <label for ="{{ form.svc_degree.id_for_label }}"> Polynomordnung:</label> {{ form.svc_degree|as_crispy_field }}        
+            </div>            
+        </div>         
+    </div>
+    <!-- SVM REGRESSION -->
+    <div class="bd-example">
+        <legend>Stützvektormaschine Regression</legend>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for ="{{ form.svr_maxiter.id_for_label }}"> Maximale Solver-Iterationen:</label> {{ form.svr_maxiter|as_crispy_field }}        
+            </div>
+            <div class="form-group col-md-6">
+                <label for ="{{ form.svr_testsize.id_for_label }}"> Validierungsgröße bzgl. Datensatzgröße:</label> {{ form.svr_testsize|as_crispy_field }}
+            </div>
+        </div>        
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for ="{{ form.svr_C.id_for_label }}"> Inverser L2-Regularisierungs-Parameter</label> {{ form.svr_C|as_crispy_field }}        
+            </div>
+            <div class="form-group col-md-6">
+                <label for ="{{ form.svr_optimloops.id_for_label }}"> Bayes'sche Optimierungsiterationen:</label> {{ form.svr_optimloops|as_crispy_field }}
+            </div>
+        </div> 
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for ="{{ form.svr_kernel.id_for_label }}"> Kernel:</label> {{ form.svr_kernel|as_crispy_field }}
+            </div>
+            <div class="form-group col-md-6">
+                <label for ="{{ form.svr_degree.id_for_label }}"> Polynomordnung:</label> {{ form.svr_degree|as_crispy_field }}        
+            </div>            
+        </div>         
+    </div>
+    <!-- ARIMA -->    
+    <div class="bd-example">
+        <legend>ARIMA Zeitverlaufsprognose</legend>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for ="{{ form.arima_forecast.id_for_label }}"> Prognosefenstergröße bzgl. Datensatzgröße:</label> {{ form.arima_forecast|as_crispy_field }}        
+            </div>
+            <div class="form-group col-md-6">
+                <label for ="{{ form.arima_testsize.id_for_label }}"> Validierungsgröße bzgl. Datensatzgröße:</label> {{ form.arima_testsize|as_crispy_field }}
+            </div>
+        </div>        
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for ="{{ form.arima_maxpq.id_for_label }}"> Grenzwert für Autoregressions- und MA-Parameter</label> {{ form.arima_maxpq|as_crispy_field }}        
+            </div>
+            <div class="form-group col-md-6">
+                <label for ="{{ form.arima_optimloops.id_for_label }}"> Optimierungspermutationen:</label> {{ form.arima_optimloops|as_crispy_field }}
+            </div>
+        </div>   
+    </div>
+    <!-- LGBM -->    
+    <div class="bd-example">
+        <legend>LGBM Zeitverlaufsprognose</legend>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for ="{{ form.lgbm_forecast.id_for_label }}"> Prognosefenstergröße bzgl. Datensatzgröße:</label> {{ form.lgbm_forecast|as_crispy_field }}        
+            </div>
+            <div class="form-group col-md-6">
+                <label for ="{{ form.lgbm_testsize.id_for_label }}"> Validierungsgröße bzgl. Datensatzgröße:</label> {{ form.lgbm_testsize|as_crispy_field }}
+            </div>
+        </div>        
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for ="{{ form.lgbm_optimloops.id_for_label }}"> Bayes'sche Optimierungsiterationen:</label> {{ form.lgbm_optimloops|as_crispy_field }}
+            </div>
+        </div>   
+    </div>          
+    <!-- SUBMIT -->
+    <br>
+    <div class="bd-example">
+        <input type="submit" value="Alle Änderungen speichern" class="btn btn-primary btn-block">
+    </div>
+    </form>
+
+</div>
+
+
+{% endblock %}  

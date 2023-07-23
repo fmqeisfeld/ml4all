@@ -1,0 +1,249 @@
+{% extends 'accounts/main.html' %}
+{% load static %}
+{% load index %}
+{% block content %}
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<script src={% static 'js/chart.js@2.8.0.js' %}></script>
+<!--  ACCORDION -->
+<div class="card shadow">
+<div class="card-header"><h3 style="text-align:center;">Cluster-Analyse</h3></div>
+<div id="accordion">
+    <div class="card">
+    <!-- 
+        <div class="card-header" id="cluster1">
+            <h5 class="mb-0">
+                <button class="btn collapsed btn-primary btn-block" data-toggle="collapse" data-target="#collapse1">
+                    cluster1
+                </button>                
+            <h5>
+        </div>
+        <div id="collapse1" class="collapse" >
+            <div class="card-body shadow">
+                <p> Hier kommt der mist rein </p>
+            </div>
+        </div>
+        -->    
+    </div>
+</div>
+</div>
+
+<script>
+var filepath = '{{ filepath }}';
+
+function loadjson() {
+  return $.getJSON(filepath);
+}
+// *****************   AB HIER IST MAIN *****************************  //
+$.when(loadjson()).then(function (data) {
+    var accordion = document.getElementById("accordion");
+    var cnt=1;
+    var rowcnt=0;
+    Chart.defaults.global.legend.display = false;
+
+    for (var key in data) {
+      var card_node = document.createElement("DIV");
+      card_node.className = "card";
+
+      var cardhead_node = document.createElement("DIV");
+      cardhead_node.className="card-header";
+      cardhead_node.id="cluster"+cnt;
+
+      var header_node = document.createElement("H5");
+      header_node.className="mb-0";
+
+      var btn_node = document.createElement("BUTTON");
+      btn_node.className="btn collapsed btn-primary btn-block";
+      btn_node.setAttribute('data-toggle','collapse');
+      btn_node.setAttribute('data-target','#collapse'+cnt);
+      btn_node.id="btn"+cnt;
+      if(key !='-1')
+      {
+        btn_node.innerHTML='Cluster-Nr.:'+cnt;
+        btn_node.innerHTML += " mit " + data[key]['samples'] + " Eintr&auml;gen";
+      }
+      else{
+        btn_node.innerHTML = data[key]['samples'] + " nicht clusterbare Eintr&auml;ge";
+      }
+      
+    
+      var collapse_node = document.createElement("DIV");
+      collapse_node.className="collapse";
+      collapse_node.id = 'collapse'+cnt;
+
+      var collapsed_card = document.createElement("DIV");
+      collapsed_card.className = "card-body shadow";
+
+      var table_node = document.createElement("TABLE");
+      table_node.className="table table-bordered";
+     
+      var table_head_node = document.createElement("TR");
+      table_head_node.innerHTML='<th> Bezeichnung </th> <th> Min.</th> <th> Med.</th> <th> Max.</th> <th> Histogramm </th>';      
+      table_node.appendChild(table_head_node);      
+
+      for(var item in data[key]) // item = samples, Age, Alcohol Results, ...
+      {
+        if(item=='samples') continue;
+        var row = document.createElement("TR");
+        row.setAttribute("style","height:10em;")
+        var col1 = document.createElement("TD");
+        
+
+        // Bezeichnung
+        col1.innerHTML= item;
+        row.appendChild(col1);          
+
+        
+        var col2=document.createElement("TD"); // Min.
+        var col3=document.createElement("TD"); // Med.
+        var col4=document.createElement("TD"); // Max
+        var col5=document.createElement("TD"); // Histo
+        
+        if(data[key][item]['type']==0)
+        {
+            //console.log('type:'+data[key][item]['type']);
+            //console.log('med:'+data[key][item]['med']);
+
+            col2.innerHTML =data[key][item]['min'];
+            col3.innerHTML =data[key][item]['med'];
+            col4.innerHTML =data[key][item]['max'];
+            col5.innerHTML ='<canvas id="histchart'+rowcnt+'"  width="100%" height="100%"></canvas>';  
+            // hier stand vorher ... 100%% ...//  
+        }
+        else
+        {
+            col2.innerHTML = '-';
+            col3.innerHTML = '-';
+            col4.innerHTML = '-';
+            col5.innerHTML = '-';
+            col5.innerHTML ='<canvas id="histchart'+rowcnt+'"  width="100%" height="100%"></canvas>';         
+        } 
+            
+        row.appendChild(col2);
+        row.appendChild(col3);
+        row.appendChild(col4);
+        row.appendChild(col5);
+
+        table_node.appendChild(row);
+        rowcnt++;
+      }
+      
+      
+      collapsed_card.appendChild(table_node);
+      collapse_node.appendChild(collapsed_card);
+
+      header_node.appendChild(btn_node);
+      cardhead_node.appendChild(header_node);
+
+      card_node.appendChild(cardhead_node);
+      card_node.appendChild(collapse_node);
+
+      accordion.appendChild(card_node);
+       
+      cnt++;  
+    }
+
+    //2nd loop for Charts
+    rowcnt=0;
+    for (var key in data) 
+    {
+        for(var item in data[key])
+        {
+            if(item=='samples') continue;            
+            if(data[key][item]['type']==0) // numerical
+            {                
+                
+                // Charts 
+                var dataValues=data[key][item]['hist'];
+                var dataLabels=data[key][item]['bin_edges'];
+                var secondtolastbinedge = dataLabels[4];
+                var lastbinedge = dataLabels[5];
+
+                /*
+                console.log(dataValues);
+                console.log(dataLabels);
+                console.log(secondtolastbinedge);
+                console.log(lastbinedge);   
+                */
+                var ctx = document.getElementById('histchart'+rowcnt).getContext('2d');
+                
+
+                var myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: dataLabels,
+                        datasets: [{
+                        label: '',
+                        data: dataValues,
+                        backgroundColor: 'rgba(255, 99, 132, 1)',
+                        }]
+                    },
+                    options: {
+                        // fit to width  
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        showScale: false,                
+                        scales: {
+                            xAxes: [{
+                                display: false,
+                                barPercentage: 1.25, //5 bins ergeben immer dieses ratio
+                                ticks: {
+                                    max: secondtolastbinedge, //das muss genau binwidth kleiner als maxval sein
+                                }
+                            }, 
+                            {
+                                display: true,
+                                ticks: {
+                                    autoSkip: false,
+                                    max: lastbinedge,
+                                }
+                            }],
+                            yAxes: [{
+                                ticks: {
+                                beginAtZero:false,
+                                }
+                            }]
+                        }
+                    }
+                })                
+            }
+            else // categorical 
+            {
+                var dataValues=data[key][item]['hist'];
+                var dataLabels=data[key][item]['classes'];
+
+                var ctx = document.getElementById('histchart'+rowcnt).getContext('2d');
+
+                var myChart= new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dataLabels,
+                    datasets: [{
+                    label: '',
+                    data: dataValues,
+                    backgroundColor: 'rgba(255, 99, 132, 1)',
+                    }]
+                },
+                options: {
+                        // fit to width  
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    showScale: false,
+                    scales: {
+                        yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                        }]
+                    }
+                    }
+                });
+
+            }
+            rowcnt++;    
+        }
+    }
+
+});
+</script>
+
+{% endblock %}
