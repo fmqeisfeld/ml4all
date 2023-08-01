@@ -3,7 +3,7 @@
 Bei *ML4ALL* handelt es sich um eine Webapp, die auf dem Django-Framework aufbaut.
 Der Zweck der Applikation besteht darin, jedem zu ermöglichen auf eine möglichst intuitive Art und Weise seine eigenen Daten mit Hilfe von Machine-Learning Modellen zu analysieren um datengestützte Entscheidungsfindung zu erleichtern.
 
-Die zu analysierenden Daten können in den Formaten *xls*,*csv* oder auch *odf* 
+Die zu analysierenden Daten können in den Formaten *xls*,*csv* oder auch *odf* bereitgestellt werden.
 
 Zu den momentan implementierten Modellen zählen:
 - *Decision Tree*-Klassifizierung
